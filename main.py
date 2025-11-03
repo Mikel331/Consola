@@ -1,6 +1,10 @@
 import os
 import time
+import subprocess
+import requests
+import threading
 import json
+from datetime import datetime
 
 config = "config.json"
 datos = "datos"
@@ -57,3 +61,33 @@ def mostrarFicheros():
      for i, f in enumerate(ficheros, 1):
           print(f"{i}. {f}")
           return ficheros
+     
+def seleccionarFichero():
+          ficheros = mostrarFicheros()
+          if not ficheros:
+               return None
+          eleccion = input("\n Numero o nombre del fichero: ")
+          if eleccion.isdigit():
+               idx = int(eleccion) -1
+               if 0 <= idx <len(ficheros):
+                    return os.path.join(datos, ficheros[idx])
+               elif eleccion in ficheros:
+                    return os.path.join(datos, eleccion)
+               print("fichero no encontrado")
+               return None
+          
+def verFichero():
+     ruta = seleccionarFichero()
+     if ruta:
+          with open(ruta, "r", encoding="utf-8") as f:
+               contenido = json.load(f)
+               print(json.dumps(contenido, indent=2, ensure_ascii= False))
+          
+def ver_fichero():
+    """Muestra en pantalla el contenido JSON de un fichero"""
+    ruta = seleccionar_fichero()
+    if ruta:
+        with open(ruta, "r", encoding="utf-8") as f:
+            contenido = json.load(f)
+            print(json.dumps(contenido, indent=2, ensure_ascii=False))        
+        
