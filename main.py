@@ -47,3 +47,13 @@ def descargarDatos():
             print(f"error {e}")
 
 time.sleep(config["recarga"]) * 60
+
+def mostrarFicheros():
+     ficheros = sorted(os.listdir(datos))
+     if not ficheros:
+          print("no hay ficheros")
+          return[]
+     print("\n ficheros:")
+     for i, f in enumerate(ficheros, 1):
+          print(f"{i}. {f}")
+          return ficheros
