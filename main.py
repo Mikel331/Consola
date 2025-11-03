@@ -83,11 +83,48 @@ def verFichero():
                contenido = json.load(f)
                print(json.dumps(contenido, indent=2, ensure_ascii= False))
           
-def ver_fichero():
-    """Muestra en pantalla el contenido JSON de un fichero"""
-    ruta = seleccionar_fichero()
-    if ruta:
-        with open(ruta, "r", encoding="utf-8") as f:
-            contenido = json.load(f)
-            print(json.dumps(contenido, indent=2, ensure_ascii=False))        
-        
+def editar_fichero():
+    ruta = seleccionarFichero()
+    if not ruta:
+        return
+
+    with open(ruta, "r", encoding="utf-8") as f:
+        dato = json.load(f)
+
+    print("1. Añadir contacto")
+    print("2. Modificar contacto")
+    print("3. Eliminar contacto")
+    op = input("selecciona:  ")
+
+    if op == "1":
+        nuevo = {}
+        nuevo["id"] = int(input("ID: "))
+        nuevo["name"] = input("Nombre: ")
+        nuevo["email"] = input("Email: ")
+        nuevo["phone"] = input("telefono: ")
+        datos.append(nuevo)
+        print("Contacto añadido ")
+
+    elif op == "2":
+        modificar = int(input("ID del contacto a modificar: "))
+        encontrado = next((c for c in dato if c["id"] == modificar), None)
+        if encontrado:
+            encontrado["name"] = input(f"Nuevo nombre ({encontrado['name']}): ") or encontrado["name"]
+            encontrado["email"] = input(f"Nuevo email ({encontrado['email']}): ") or encontrado["email"]
+            encontrado["phone"] = input(f"Nuevo telefono ({encontrado['phone']}): ") or encontrado["phone"]
+            print("contacto actualizado ")
+        else:
+            print("no se encuentra")
+
+    elif op == "3":
+        eliminar = int(input("ID del contacto a eliminar: "))
+        dato = [c for c in dato if c["id"] != eliminar]
+        print("Contacto eliminado.")
+    else:
+        print("opcion no valida")
+        return
+
+
+    with open(ruta, "w", encoding="utf-8") as f:
+        json.dump(dato, f, indent=4, ensure_ascii=False)
+    print("cambios guardados")
