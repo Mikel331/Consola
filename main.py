@@ -128,3 +128,22 @@ def editar_fichero():
     with open(ruta, "w", encoding="utf-8") as f:
         json.dump(dato, f, indent=4, ensure_ascii=False)
     print("cambios guardados")
+
+
+def editarConfig():
+    print(f"\n Configuracion original:")
+    print(json.dumps(config, indent=4))
+    print("\n1. cambiar url de la api")
+    print("2. Cambiar tiempo de descarga ")
+    op = input("Selecciona : ")
+
+    if op == "1":
+        config["api_url"] = input("Nueva URL: ")
+    elif op == "2":
+        nuevo = input("Nuevo tiempo (min): ")
+        if nuevo.isdigit():
+            config["recarga"] = int(nuevo)
+        else:
+            print("no valido")
+    guardarConfig(config)
+    print("configuracion actualizada")
