@@ -1,109 +1,104 @@
 import os
 import time
-import subprocess
 import requests
 import threading
 import json
 from datetime import datetime
 
-config = "config.json"
-datos = "datos"
+config_file = "config.json"  
+datos = "datos"             
+
+def guardarConfig(conf):
+    with open(config_file, "w", encoding="utf-8") as f:
+        json.dump(conf, f, indent=4, ensure_ascii=False)
 
 def cargarConfig():
-    if not os.path.exists(config):
+    if not os.path.exists(config_file):
         conf = {
-            "api_url": "http://127.0.0.1:5000/getDatos", 
-            "recarga": 2
+            "api_url": "http://127.0.0.1:5000/getDatos",
+            "recarga": 2 
         }
         guardarConfig(conf)
-        with open(config, "r") as f:
-            return json.load(f)
-        
-def guardarConfig(conf):
-    with open(config, "w") as f:
-        json.dump(conf, f, indent=4)
+    with open(config_file, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-config  = cargarConfig()
+config = cargarConfig()
 os.makedirs(datos, exist_ok=True)
-
 
 def descargarDatos():
     ultimoArchivo = None
     while True:
-        try: 
-            print("n\Descargando datos de la api")
-            r = requests.get(config["api_url"], timeout= 10)
-
+        try:
+            print("\n descargando datos")
+            r = requests.get(config["api_url"], timeout=10)
             if r.status_code == 200:
                 dato = r.json()
                 if dato != ultimoArchivo:
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    nombreArchivo = os.path.join(datos, f"contqctos{timestamp}.json")
-                    with open(nombreArchivo, "w") as f:
-                        json.dump(dato, f, indent=4)
+                    nombreArchivo = os.path.join(datos, f"contactos_{timestamp}.json")
+                    with open(nombreArchivo, "w", encoding="utf-8") as f:
+                        json.dump(dato, f, indent=4, ensure_ascii=False)
                     ultimoArchivo = dato
-                    print(f"Datos guardados en {nombreArchivo}")
+                    print(f"datos guardados {nombreArchivo}")
                 else:
-                        print("No hay nuevos datos para guardar.")
+                    print("no hay nuevos datos")
             else:
-                    print(f"Error al descargar datos: {r.status_code}")
-        except Exception as e:  
-            print(f"error {e}")
-
-time.sleep(config["recarga"]) * 60
+                print(f"error {r.status_code}")
+        except Exception as e:
+            print(f"Error {e}")
+        time.sleep(config["recarga"] * 60)  
 
 def mostrarFicheros():
-     ficheros = sorted(os.listdir(datos))
-     if not ficheros:
-          print("no hay ficheros")
-          return[]
-     print("\n ficheros:")
-     for i, f in enumerate(ficheros, 1):
-          print(f"{i}. {f}")
-          return ficheros
-     
+    ficheros = sorted(os.listdir(datos))
+    if not ficheros:
+        print("no hay ficheros")
+        return []
+    print("\nFicheros disponibles:")
+    for i, f in enumerate(ficheros, 1):
+        print(f"{i}. {f}")
+    return ficheros
+
 def seleccionarFichero():
-          ficheros = mostrarFicheros()
-          if not ficheros:
-               return None
-          eleccion = input("\n Numero o nombre del fichero: ")
-          if eleccion.isdigit():
-               idx = int(eleccion) -1
-               if 0 <= idx <len(ficheros):
-                    return os.path.join(datos, ficheros[idx])
-               elif eleccion in ficheros:
-                    return os.path.join(datos, eleccion)
-               print("fichero no encontrado")
-               return None
-          
+    ficheros = mostrarFicheros()
+    if not ficheros:
+        return None
+    eleccion = input("\nnumero o nombre del fichero: ")
+    if eleccion.isdigit():
+        idx = int(eleccion) - 1
+        if 0 <= idx < len(ficheros):
+            return os.path.join(datos, ficheros[idx])
+    elif eleccion in ficheros:
+        return os.path.join(datos, eleccion)
+    print("fichero no encontrado")
+    return None
+
 def verFichero():
-     ruta = seleccionarFichero()
-     if ruta:
-          with open(ruta, "r", encoding="utf-8") as f:
-               contenido = json.load(f)
-               print(json.dumps(contenido, indent=2, ensure_ascii= False))
-          
-def editar_fichero():
+    ruta = seleccionarFichero()
+    if ruta:
+        with open(ruta, "r", encoding="utf-8") as f:
+            contenido = json.load(f)
+            print(json.dumps(contenido, indent=2, ensure_ascii=False))
+
+def editarFichero():
     ruta = seleccionarFichero()
     if not ruta:
         return
-
     with open(ruta, "r", encoding="utf-8") as f:
         dato = json.load(f)
 
-    print("1. Añadir contacto")
+    print("\n1. Añadir contacto")
     print("2. Modificar contacto")
     print("3. Eliminar contacto")
-    op = input("selecciona:  ")
+    op = input("Selecciona: ")
 
     if op == "1":
         nuevo = {}
         nuevo["id"] = int(input("ID: "))
         nuevo["name"] = input("Nombre: ")
         nuevo["email"] = input("Email: ")
-        nuevo["phone"] = input("telefono: ")
-        datos.append(nuevo)
-        print("Contacto añadido ")
+        nuevo["phone"] = input("Telefono: ")
+        dato.append(nuevo)
+        print("Contacto añadido")
 
     elif op == "2":
         modificar = int(input("ID del contacto a modificar: "))
@@ -112,30 +107,29 @@ def editar_fichero():
             encontrado["name"] = input(f"Nuevo nombre ({encontrado['name']}): ") or encontrado["name"]
             encontrado["email"] = input(f"Nuevo email ({encontrado['email']}): ") or encontrado["email"]
             encontrado["phone"] = input(f"Nuevo telefono ({encontrado['phone']}): ") or encontrado["phone"]
-            print("contacto actualizado ")
+            print("Contacto actualizado")
         else:
-            print("no se encuentra")
+            print("No se encontro el contacto")
 
     elif op == "3":
         eliminar = int(input("ID del contacto a eliminar: "))
         dato = [c for c in dato if c["id"] != eliminar]
-        print("Contacto eliminado.")
+        print("Contacto eliminado")
     else:
-        print("opcion no valida")
+        print("Opcion no valida")
         return
-
 
     with open(ruta, "w", encoding="utf-8") as f:
         json.dump(dato, f, indent=4, ensure_ascii=False)
-    print("cambios guardados")
-
+    print("Cambios guardados")
 
 def editarConfig():
-    print(f"\n Configuracion original:")
-    print(json.dumps(config, indent=4))
-    print("\n1. cambiar url de la api")
-    print("2. Cambiar tiempo de descarga ")
-    op = input("Selecciona : ")
+    print(f"\nConfiguracion actual:")
+    print(json.dumps(config, indent=4, ensure_ascii=False))
+    print("\n1. Cambiar URL de la API")
+    print("\n2. Cambiar tiempo de descarga (minutos)")
+    print("\n3.Salir")
+    op = input("Selecciona: ")
 
     if op == "1":
         config["api_url"] = input("Nueva URL: ")
@@ -143,7 +137,53 @@ def editarConfig():
         nuevo = input("Nuevo tiempo (min): ")
         if nuevo.isdigit():
             config["recarga"] = int(nuevo)
+        elif op == "6":
+            print("Saliendo del programa...")
+            menu()
         else:
-            print("no valido")
+            print("Valor no valido")
+    
     guardarConfig(config)
-    print("configuracion actualizada")
+    print("Configuracion actualizada")
+
+def ping_api_http():
+    try:
+        r = requests.get(config["api_url"], timeout=5)
+        if r.status_code == 200:
+            print("Servidor disponible (HTTP 200)")
+        else:
+            print(f"Servidor responde, pero con codigo {r.status_code}")
+    except requests.RequestException as e:
+        print(f"No se pudo conectar al servidor: {e}")
+
+def menu():
+    while True:
+        print("\n=========== MENU PRINCIPAL ===========")
+        print("1. Mostrar ficheros")
+        print("2. Ver contenido de un fichero")
+        print("3. Editar (añadir/modificar/eliminar) contactos en un fichero")
+        print("4. Configuracion")
+        print("5. Ping a la API")
+        print("6. Salir")
+        op = input("Seleccione una opcion: ")
+
+        if op == "1":
+            mostrarFicheros()
+        elif op == "2":
+            verFichero()
+        elif op == "3":
+            editarFichero()
+        elif op == "4":
+            editarConfig()
+        elif op == "5":
+            ping_api_http()
+        elif op == "6":
+            print("Saliendo del programa...")
+            break
+        else:
+            print("Opcion no valida")
+
+if __name__ == "__main__":
+    hilo = threading.Thread(target=descargarDatos, daemon=True)
+    hilo.start()
+    menu()
