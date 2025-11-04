@@ -5,8 +5,8 @@ import threading
 import json
 from datetime import datetime
 
-config_file = "config.json"  
-datos = "datos"             
+config_file = "config.json"
+datos = "datos"
 
 def guardarConfig(conf):
     with open(config_file, "w", encoding="utf-8") as f:
@@ -16,7 +16,7 @@ def cargarConfig():
     if not os.path.exists(config_file):
         conf = {
             "api_url": "http://127.0.0.1:5000/getDatos",
-            "recarga": 2 
+            "recarga": 2
         }
         guardarConfig(conf)
     with open(config_file, "r", encoding="utf-8") as f:
@@ -29,29 +29,37 @@ def descargarDatos():
     ultimoArchivo = None
     while True:
         try:
-            print("\n descargando datos")
+            print("\nDescargando datos...")
             r = requests.get(config["api_url"], timeout=10)
             if r.status_code == 200:
                 dato = r.json()
+                for contacto in dato:
+                    if "image_1920" in contacto and contacto["image_1920"]:
+                        img = contacto["image_1920"]
+                        if len(img) > 50:
+                            contacto["image_1920"] = img[:50] + "...[BASE64]"
+                        else:
+                            contacto["image_1920"] = img
+
                 if dato != ultimoArchivo:
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     nombreArchivo = os.path.join(datos, f"contactos_{timestamp}.json")
                     with open(nombreArchivo, "w", encoding="utf-8") as f:
                         json.dump(dato, f, indent=4, ensure_ascii=False)
                     ultimoArchivo = dato
-                    print(f"datos guardados {nombreArchivo}")
+                    print(f"Datos guardados en {nombreArchivo}")
                 else:
-                    print("no hay nuevos datos")
+                    print("No hay nuevos datos")
             else:
-                print(f"error {r.status_code}")
+                print(f"Error {r.status_code}")
         except Exception as e:
             print(f"Error {e}")
-        time.sleep(config["recarga"] * 60)  
+        time.sleep(config["recarga"] * 60)
 
 def mostrarFicheros():
     ficheros = sorted(os.listdir(datos))
     if not ficheros:
-        print("no hay ficheros")
+        print("No hay ficheros")
         return []
     print("\nFicheros disponibles:")
     for i, f in enumerate(ficheros, 1):
@@ -62,14 +70,14 @@ def seleccionarFichero():
     ficheros = mostrarFicheros()
     if not ficheros:
         return None
-    eleccion = input("\nnumero o nombre del fichero: ")
+    eleccion = input("\nNumero o nombre del fichero: ")
     if eleccion.isdigit():
         idx = int(eleccion) - 1
         if 0 <= idx < len(ficheros):
             return os.path.join(datos, ficheros[idx])
     elif eleccion in ficheros:
         return os.path.join(datos, eleccion)
-    print("fichero no encontrado")
+    print("Fichero no encontrado")
     return None
 
 def verFichero():
@@ -86,7 +94,7 @@ def editarFichero():
     with open(ruta, "r", encoding="utf-8") as f:
         dato = json.load(f)
 
-    print("\n1. Añadir contacto")
+    print("\n1. Anadir contacto")
     print("2. Modificar contacto")
     print("3. Eliminar contacto")
     op = input("Selecciona: ")
@@ -98,7 +106,7 @@ def editarFichero():
         nuevo["email"] = input("Email: ")
         nuevo["phone"] = input("Telefono: ")
         dato.append(nuevo)
-        print("Contacto añadido")
+        print("Contacto anadido")
 
     elif op == "2":
         modificar = int(input("ID del contacto a modificar: "))
@@ -127,8 +135,8 @@ def editarConfig():
     print(f"\nConfiguracion actual:")
     print(json.dumps(config, indent=4, ensure_ascii=False))
     print("\n1. Cambiar URL de la API")
-    print("\n2. Cambiar tiempo de descarga (minutos)")
-    print("\n3.Salir")
+    print("2. Cambiar tiempo de descarga (minutos)")
+    print("3. Salir")
     op = input("Selecciona: ")
 
     if op == "1":
@@ -137,12 +145,8 @@ def editarConfig():
         nuevo = input("Nuevo tiempo (min): ")
         if nuevo.isdigit():
             config["recarga"] = int(nuevo)
-        elif op == "6":
-            print("Saliendo del programa...")
-            menu()
         else:
             print("Valor no valido")
-    
     guardarConfig(config)
     print("Configuracion actualizada")
 
@@ -165,7 +169,7 @@ def menu():
         print("4. Configuracion")
         print("5. Ping a la API")
         print("6. Salir")
-        op = input("Seleccione una opcion: ")
+        op = input("Selecciona una opcion: ")
 
         if op == "1":
             mostrarFicheros()
