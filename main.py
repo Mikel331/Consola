@@ -116,7 +116,6 @@ def editarFichero():
 
     if op == "1":
         nuevo = {
-            "id": int(input("ID: ")),
             "name": input("Nombre: "),
             "email": input("Email: "),
             "phone": input("Teléfono: ")
